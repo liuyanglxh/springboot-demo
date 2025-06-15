@@ -35,7 +35,7 @@ jobs:
         path: target/*.jar
 
   analyze:
-    needs: build  # 必须在构建之后执行
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -45,34 +45,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 下载构建产物
+      - name: Download Target Directory
+        uses: actions/download-artifact@v4
+        with:
+          name: target-dir
+          path: ${{ github.workspace }}/target  # 关键修复：放到正确位置
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # 复用构建步骤生成的字节码
-      - name: Prepare for CodeQL
-        run: |
-          # 复制构建产物（包含编译后的字节码）
-          cp -R ${{ github.workspace }}/target .
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: 'java'
-          paths: 'src/main/java'  # 明确源代码路径
+          paths: 'src/main/java'
 
-      # 使用已编译的字节码，无需重新编译
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
-          fail-on-severity: error  # 错误级别问题导致失败
-          fail-on-errors: true     # 任何分析错误导致失败
+          fail-on-severity: error
+          fail-on-errors: true
 
-      # 确保检测到问题后终止流水线
       - name: Fail on Critical Issues
-        if: failure() || success()
+        if: always()  # 即使分析失败也执行
         run: |
           if [ -f codeql-analysis.sarif ] && grep -q '"level": "error"' codeql-analysis.sarif; then
             echo "##[error]Critical security issues found!"
