@@ -38,7 +38,6 @@ jobs:
           path: target/*.jar
 
   code-scan:
-    name: CodeQL Analysis with Fail-on-High-Security
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -54,14 +53,25 @@ jobs:
         with:
           languages: java
 
-      - name: Build project manually (optional but recommended)
+      - name: Build project manually
         run: mvn clean install -DskipTests
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           upload: true
-          failure-level: warning
+
+      - name: Check for High Severity Alerts
+        run: |
+          echo "Checking for high severity alerts..."
+          # 查询是否有高危漏洞
+          if curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open" | grep -q '"severity":"high"'; then
+            echo "❌ High severity vulnerability found. Failing the pipeline."
+            exit 1
+          else
+            echo "✅ No high severity vulnerabilities found."
+          fi
 
   # 代码扫描任务 - 保持您命名的 code-scan
   deploy:
