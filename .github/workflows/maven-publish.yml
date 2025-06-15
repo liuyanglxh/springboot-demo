@@ -1,14 +1,10 @@
-# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
-# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
-
-name: Maven Package
+name: Maven CI/CD Pipeline
 
 on:
   push:
-    branches:  [master]
+    branches: [master]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -16,50 +12,110 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          server-id: github
+          settings-path: ${{ github.workspace }}
 
-    - name: mvn打包
-      run: mvn -B package --file pom.xml
+      - name: mvn打包
+        run: mvn -B clean package --file pom.xml
 
-    - name: 上传
-      uses: actions/upload-artifact@v4
-      with:
-        name: jar-file
-        path: target/*.jar
+      # 新增：上传完整target目录（用于CodeQL分析）
+      - name: 上传target目录
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-dir
+          path: target
+          retention-days: 1
+
+      - name: 上传JAR文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-file
+          path: target/*.jar
+
+  # 新增代码扫描任务
+  code-scan:
+    needs: build  # 在构建后执行
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 下载构建产物（包含编译后的字节码）
+      - name: 下载target目录
+        uses: actions/download-artifact@v4
+        with:
+          name: target-dir
+          path: ${{ github.workspace }}/target
+
+      - name: 设置JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      # 初始化CodeQL扫描
+      - name: 初始化CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'java'
+          paths: 'src/main/java'
+
+      # 执行安全分析
+      - name: 执行CodeQL分析
+        uses: github/codeql-action/analyze@v3
+        with:
+          # 关键配置：发现严重问题立即失败
+          fail-on-severity: error
+          fail-on-errors: true
+
+      # 双重保障：自定义检查
+      - name: 检查严重问题
+        if: always()  # 即使分析失败也执行
+        run: |
+          if [ -f codeql-analysis.sarif ] && grep -q '"level": "error"' codeql-analysis.sarif; then
+            echo "##[error]发现严重代码问题，终止流水线！"
+            exit 1
+          fi
 
   deploy:
-    needs: build
+    needs: [build, code-scan]  # 依赖构建和代码扫描
     runs-on: ubuntu-latest
+    # 只有前两个任务都成功才执行
+    if: success()
+
     steps:
-      - name: Download Artifact
+      - name: 下载JAR文件
         uses: actions/download-artifact@v4
         with:
           name: jar-file
-          path: artifacts  # 下载到 artifacts 目录（无前导点）
+          path: artifacts
 
-      - name: Upload to Server
+      - name: 部署到服务器
         run: |
           # 将私钥写入文件
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           
-          # 获取 JAR 文件名
+          # 获取JAR文件名
           JAR_FILE=$(ls artifacts/*.jar)
-          echo "找到 JAR 文件: $JAR_FILE"
+          echo "找到JAR文件: $JAR_FILE"
           
-          # 使用 SCP 上传
+          # 上传到服务器
           scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$JAR_FILE" ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
           
           # 验证上传
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "ls -lh /home/deployer/app"
           
-          # 启动服务
+          # 重启服务
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "sudo systemctl restart myapp"
