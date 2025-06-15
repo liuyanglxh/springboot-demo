@@ -37,29 +37,30 @@ jobs:
           echo "让我看看target目录下有什么"
           ls target/
 
-  deploy:  # 添加这个新任务
-    needs: build  # 确保先完成构建
+  deploy:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
           name: jar-file
-          path: target  # 下载到 target 目录
+          # 重点修改1：下载到当前目录而不是target目录
+          path: .
 
-      - name: 发给服务器
+      - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 列出要传输的文件（调试）
-            echo "要传输的文件列表："
-            ls -lh target/*.jar
+            # 重点修改2：使用正确的文件路径（当前目录下的jar文件）
+            echo "当前目录文件列表："
+            ls -lh
             
-            # 执行传输（添加详细输出）
-            scp -v -o StrictHostKeyChecking=no target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
+            # 重点修改3：使用通配符匹配任何jar文件
+            scp -v -o StrictHostKeyChecking=no *.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
             
-            # 检查服务器上的文件（调试）
+            # 重点修改4：验证服务器上的文件
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "ls -lh /home/deployer/app"
