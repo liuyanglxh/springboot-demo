@@ -62,15 +62,28 @@ jobs:
           upload: true
 
       - name: Check for High Severity Alerts
+        id: vuln-check
         run: |
           echo "Checking for high severity alerts..."
-          # 查询是否有高危漏洞
-          if curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open" | grep -q '"severity":"high"'; then
-            echo "❌ High severity vulnerability found. Failing the pipeline."
-            exit 1
+          FOUND=0
+          for i in {1..10}; do
+            echo "Attempt $i/10..."
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open")
+
+            if echo "$RESPONSE" | grep -q '"severity":"high"'; then
+              echo "❌ High severity vulnerability found. Failing the pipeline."
+              FOUND=1
+              break
+            fi
+
+            sleep 5
+          done
+
+          if [ $FOUND -eq 0 ]; then
+            echo "✅ No high severity vulnerabilities found after retry."
           else
-            echo "✅ No high severity vulnerabilities found."
+            exit 1
           fi
 
   # 代码扫描任务 - 保持您命名的 code-scan
