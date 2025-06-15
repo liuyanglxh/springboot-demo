@@ -33,6 +33,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   build:
+    needs: Analyze
     runs-on: ubuntu-latest
     permissions:
       contents: read
