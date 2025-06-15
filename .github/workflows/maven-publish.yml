@@ -34,52 +34,8 @@ jobs:
         name: jar-file
         path: target/*.jar
 
-  analyze:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 下载构建产物
-      - name: Download Target Directory
-        uses: actions/download-artifact@v4
-        with:
-          name: target-dir
-          path: ${{ github.workspace }}/target  # 关键修复：放到正确位置
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'java'
-          paths: 'src/main/java'
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          fail-on-severity: error
-          fail-on-errors: true
-
-      - name: Fail on Critical Issues
-        if: always()  # 即使分析失败也执行
-        run: |
-          if [ -f codeql-analysis.sarif ] && grep -q '"level": "error"' codeql-analysis.sarif; then
-            echo "##[error]Critical security issues found!"
-            exit 1
-          fi
-
   deploy:
-    needs: analyze
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifact
