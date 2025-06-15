@@ -13,9 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      actions: read
-      contents: read
       security-events: write
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -25,12 +24,8 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: 'java'
-
-      - name: Build project (required for Java)
-        run: mvn -B clean compile
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+          # 添加以下配置 ↓
+          config-file: .github/codeql/codeql-config.yml
 
   build:
     needs: Analyze
