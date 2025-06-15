@@ -33,6 +33,7 @@ jobs:
       with:
         name: jar-file
         path: target/*.jar
+        script: ls /target
 
   deploy:  # 添加这个新任务
     needs: build  # 确保先完成构建
