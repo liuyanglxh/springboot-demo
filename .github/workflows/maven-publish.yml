@@ -60,9 +60,10 @@ jobs:
           script: |
             # 确保目录存在
             mkdir -p /home/deployer/app
-            
+            echo "目录存在"
             # 使用基本SCP命令上传
             scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ./artifacts/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
-            
+            echo 使用基本SCP命令上传完成
             # 验证服务器文件
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "ls -lh /home/deployer/app"
+            echo 验证服务器文件完成
