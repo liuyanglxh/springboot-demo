@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 @RestController
 @RequestMapping("/test")
@@ -33,5 +35,20 @@ public class TestController {
             output.append(line).append("\n");
         }
         return output.toString();
+    }
+
+
+    @GetMapping("/db")
+    public String connectToDatabase() {
+        String url = "jdbc:mysql://localhost:3306/mydb";
+        String username = "root";
+        String password = "123456";  // ⚠️ 密码写死！
+
+        try {
+            Connection conn = DriverManager.getConnection(url, username, password);
+            return "Connected!";
+        } catch (Exception e) {
+            return "Failed to connect.";
+        }
     }
 }
