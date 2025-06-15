@@ -51,12 +51,12 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 创建应用目录
-            mkdir -p /home/deployer/app
-            echo 创建成功
-            pwd
-            # 上传 JAR 文件
-            scp -r ./target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
+            # 列出要传输的文件（调试）
+            echo "要传输的文件列表："
+            ls -lh target/*.jar
             
-            # 重启应用（我们会创建服务）
-            echo "部署成功！请登录服务器创建 systemd 服务"
+            # 执行传输（添加详细输出）
+            scp -v -o StrictHostKeyChecking=no target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
+            
+            # 检查服务器上的文件（调试）
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "ls -lh /home/deployer/app"
