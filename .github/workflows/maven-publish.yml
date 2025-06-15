@@ -33,7 +33,9 @@ jobs:
       with:
         name: jar-file
         path: target/*.jar
-        script: ls /target
+        script: |
+          echo "让我看看target目录下有什么"
+          ls target/
 
   deploy:  # 添加这个新任务
     needs: build  # 确保先完成构建
