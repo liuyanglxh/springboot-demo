@@ -12,9 +12,9 @@ public class TestController {
     @GetMapping("/demo")
     public String demo() {
         String s = null;
-//        if (s.length() == 2) {
-////            return "2";
-//        }
+        if (s.length() == 2) {
+            return "2";
+        }
         return "try again\n";
     }
 }

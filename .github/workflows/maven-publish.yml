@@ -37,9 +37,35 @@ jobs:
           name: jar-file
           path: target/*.jar
 
+  code-scan:
+    name: CodeQL Analysis with Fail-on-High-Security
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          # 如果发现 High 级别漏洞，自动失败
+          failure-threshold: high
+
   # 代码扫描任务 - 保持您命名的 code-scan
   deploy:
-    needs: [build]
+    needs: [build, code-scan]
     runs-on: ubuntu-latest
     if: success()
 
