@@ -27,6 +27,12 @@ jobs:
           # 添加以下配置 ↓
           config-file: .github/codeql/codeql-config.yml
 
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          fail-on-severity: error  # 关键参数1：错误级别问题导致失败
+          fail-on-errors: true     # 关键参数2：任何分析错误导致失败
+
   build:
     needs: Analyze
     runs-on: ubuntu-latest
