@@ -46,6 +46,9 @@ jobs:
         with:
           name: jar-file
           path: ./artifacts  # 下载到特定目录
+          script: |
+            echo artifacts目录
+            ls ./artifacts
 
       - name: Prepare SSH Key
         run: |
