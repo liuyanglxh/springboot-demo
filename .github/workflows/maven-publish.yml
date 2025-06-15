@@ -54,11 +54,8 @@ jobs:
         with:
           languages: java
 
-      - name: Build project manually
+      - name: Build project manually (optional but recommended)
         run: mvn clean install -DskipTests
-
-      - name: Build codeql database
-        uses: github/codeql-action/build@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
