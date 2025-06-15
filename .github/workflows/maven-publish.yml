@@ -54,14 +54,16 @@ jobs:
         with:
           languages: java
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Build project manually
+        run: mvn clean install -DskipTests
+
+      - name: Build codeql database
+        uses: github/codeql-action/build@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           upload: true
-          # 如果发现 High 级别漏洞，自动失败
           failure-level: high
 
   # 代码扫描任务 - 保持您命名的 code-scan
