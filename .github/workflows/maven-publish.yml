@@ -60,8 +60,9 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
+          upload: true
           # 如果发现 High 级别漏洞，自动失败
-          failure-threshold: high
+          failure-level: high
 
   # 代码扫描任务 - 保持您命名的 code-scan
   deploy:
