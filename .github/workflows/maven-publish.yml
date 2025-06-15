@@ -33,9 +33,6 @@ jobs:
       with:
         name: jar-file
         path: target/*.jar
-        script: |
-          echo "让我看看target目录下有什么"
-          ls target/
 
   deploy:
     needs: build
@@ -46,9 +43,6 @@ jobs:
         with:
           name: jar-file
           path: ./artifacts  # 下载到特定目录
-          script: |
-            echo artifacts目录
-            ls ./artifacts
 
       - name: Prepare SSH Key
         run: |
