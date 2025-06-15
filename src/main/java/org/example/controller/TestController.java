@@ -13,8 +13,8 @@ public class TestController {
     public String demo() {
         String s = null;
         if (s.length() == 2) {
-            return "2";
+//            return "2";
         }
-        return "success123124444444\n";
+        return "try again\n";
     }
 }
