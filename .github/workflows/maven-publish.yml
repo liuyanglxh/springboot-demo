@@ -61,7 +61,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           upload: true
-          failure-level: high
+          failure-level: warning
 
   # 代码扫描任务 - 保持您命名的 code-scan
   deploy:
