@@ -27,10 +27,6 @@ jobs:
 
     - name: mvn打包
       run: mvn -B package --file pom.xml
-      with:
-        script:
-          pwd
-          ls
 
     - name: 上传
       uses: actions/upload-artifact@v4
@@ -49,8 +45,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jar-file
-          # 重点修改1：下载到当前目录而不是target目录
-          path: .
+          path: ./artifacts  # 下载到特定目录
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
@@ -59,12 +54,18 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 重点修改2：使用正确的文件路径（当前目录下的jar文件）
-            echo "当前目录文件列表："
-            ls -lh
+            # 创建服务器目录
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "mkdir -p /home/deployer/app"
             
-            # 重点修改3：使用通配符匹配任何jar文件
-            scp -v -o StrictHostKeyChecking=no *.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
+            # 直接上传文件（不使用scp）
+            echo "正在上传文件..."
+            drone-scp \
+              --host ${{ secrets.SERVER_IP }} \
+              --username ${{ secrets.SERVER_USER }} \
+              --key ${{ secrets.SSH_PRIVATE_KEY }} \
+              --source ./artifacts/*.jar \
+              --target /home/deployer/app
             
-            # 重点修改4：验证服务器上的文件
+            # 验证文件
+            echo "服务器上的文件："
             ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "ls -lh /home/deployer/app"
