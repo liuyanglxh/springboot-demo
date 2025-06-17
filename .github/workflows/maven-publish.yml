@@ -87,27 +87,27 @@ jobs:
           fi
 
   # 代码扫描任务 - 保持您命名的 code-scan
-  deploy:
-    needs: [build, code-scan]
-    runs-on: ubuntu-latest
-    if: success()
-
-    steps:
-      - name: 下载JAR文件
-        uses: actions/download-artifact@v4
-        with:
-          name: jar-file
-          path: artifacts
-
-      - name: 部署到服务器
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          
-          JAR_FILE=$(ls artifacts/*.jar)
-          echo "找到JAR文件: $JAR_FILE"
-          
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$JAR_FILE" ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
-          
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "sudo systemctl restart myapp"
+#  deploy:
+#    needs: [build, code-scan]
+#    runs-on: ubuntu-latest
+#    if: success()
+#
+#    steps:
+#      - name: 下载JAR文件
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: jar-file
+#          path: artifacts
+#
+#      - name: 部署到服务器
+#        run: |
+#          mkdir -p ~/.ssh
+#          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+#          chmod 600 ~/.ssh/deploy_key
+#
+#          JAR_FILE=$(ls artifacts/*.jar)
+#          echo "找到JAR文件: $JAR_FILE"
+#
+#          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$JAR_FILE" ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/home/deployer/app/
+#
+#          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "sudo systemctl restart myapp"
