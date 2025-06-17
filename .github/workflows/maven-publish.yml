@@ -66,8 +66,18 @@ jobs:
       - name: Save SARIF Report as Artifact
         run: |
           mkdir -p codeql-reports
-          cp $(find $GITHUB_WORKSPACE -name "*.sarif") codeql-reports/
-        if: always()
+
+          # 查找所有 .sarif 文件
+          SARIF_FILES=$(find $GITHUB_WORKSPACE -type f -name "*.sarif")
+
+          if [ -z "$SARIF_FILES" ]; then
+            echo "⚠️ No SARIF files found. Creating an empty report placeholder."
+            echo "No SARIF report was generated during CodeQL analysis." > codeql-reports/empty-sarif-warning.txt
+          else
+            echo "✅ Found SARIF files:"
+            echo "$SARIF_FILES"
+            cp $SARIF_FILES codeql-reports/
+          fi
 
       - name: Upload CodeQL Report
         uses: actions/upload-artifact@v4
