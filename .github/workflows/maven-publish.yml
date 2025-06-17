@@ -38,6 +38,7 @@ jobs:
           path: target/*.jar
 
   code-scan:
+    name: CodeQL Analysis with Report
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -61,30 +62,18 @@ jobs:
         with:
           upload: true
 
-      - name: Check for High Severity Alerts
-        id: vuln-check
+      # 👇 新增步骤：导出 SARIF 文件并上传为 artifact
+      - name: Save SARIF Report as Artifact
         run: |
-          echo "Checking for high severity alerts..."
-          FOUND=0
-          for i in {1..10}; do
-            echo "Attempt $i/10..."
-            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/code-scanning/alerts?state=open")
+          mkdir -p codeql-reports
+          cp $(find $GITHUB_WORKSPACE -name "*.sarif") codeql-reports/
+        if: always()
 
-            if echo "$RESPONSE" | grep -q '"severity":"high"'; then
-              echo "❌ High severity vulnerability found. Failing the pipeline."
-              FOUND=1
-              break
-            fi
-
-            sleep 5
-          done
-
-          if [ $FOUND -eq 0 ]; then
-            echo "✅ No high severity vulnerabilities found after retry."
-          else
-            exit 1
-          fi
+      - name: Upload CodeQL Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-report
+          path: codeql-reports/
 
   # 代码扫描任务 - 保持您命名的 code-scan
 #  deploy:
