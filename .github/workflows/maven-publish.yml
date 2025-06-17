@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -61,6 +61,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           upload: true
+          queries: security-and-quality
 
       # 👇 新增步骤：导出 SARIF 文件并上传为 artifact
       - name: Save SARIF Report as Artifact
