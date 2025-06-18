@@ -180,9 +180,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        - language: java-kotlin
-          build-mode: none
+      matrix: [java-kotlin]
         # CodeQL supports the following values keywords for 'language': $supported-codeql-languages
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
