@@ -3,11 +3,9 @@ name: CodeQL Analysis
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
-  schedule:
-    - cron: '0 0 * * 0' # 每周日自动运行
+    branches: [ master ]
 
 jobs:
   analyze:
