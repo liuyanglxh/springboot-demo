@@ -33,3 +33,23 @@ jobs:
         uses: github/codeql-action/analyze@v2
         with:
           category: 'java-security' # 报告分类标识
+      - name: Generate HTML Report
+        run: |
+          # 安装报告工具
+          sudo apt-get install -y jq
+          npm install -g @microsoft/sarif-viewer
+          
+          # 转换 SARIF 为 HTML
+          npx sarif-viewer --input ./codeql-database/results.sarif --output ./report.html
+          
+          # 可选：转换为 PDF（需安装 chromium）
+          sudo apt-get install -y chromium
+          npx sarif-viewer --input ./codeql-database/results.sarif --output ./report.pdf --format pdf
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            ./report.html
+            ./report.pdf
