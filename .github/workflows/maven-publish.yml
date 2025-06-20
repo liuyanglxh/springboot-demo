@@ -1,92 +1,75 @@
-name: CodeQL Analysis with Report
+name: CodeQL Security Report
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ master ]
+    branches: [ main, master ]
 
 jobs:
   analyze:
-    name: Analyze with CodeQL
+    name: Generate Security Report
     runs-on: ubuntu-latest
     permissions:
       security-events: write
       contents: read
 
     steps:
+      # 步骤1：检出代码
       - uses: actions/checkout@v4
 
-      # 初始化 CodeQL
+      # 步骤2：初始化 CodeQL（仅扫描 Java）
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: 'java'
-          queries: +security-extended
+          queries: security-extended
 
-      # 编译项目
-      - name: Build project
+      # 步骤3：编译项目（必须步骤）
+      - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # CodeQL 分析（确保输出到固定路径）
-      - name: Perform CodeQL Analysis
+      # 步骤4：运行分析（输出到固定目录）
+      - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: 'java-security'
-          output: ./codeql-results  # 使用相对路径
+          output: ./codeql_results
 
-      # ========== 报告生成 ==========
-      - name: Verify SARIF file exists
-        id: check-sarif
+      # 步骤5：生成人性化报告（无需额外依赖）
+      - name: Create Security Report
         run: |
-          if [ ! -f "./codeql-results/results.sarif" ]; then
-            echo "::error::SARIF file not found at ./codeql-results/results.sarif"
-            ls -la ./codeql-results/  # 调试目录内容
-            exit 1
-          fi
-          echo "sarif_file=./codeql-results/results.sarif" >> $GITHUB_OUTPUT
-
-      - name: Setup Tools
-        if: steps.check-sarif.outputs.sarif_file
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Generate Markdown Report
-        if: steps.check-sarif.outputs.sarif_file
-        run: |
-          echo "# CodeQL 安全扫描报告" > report.md
-          echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> report.md
-          echo "\n## 漏洞统计" >> report.md
+          # 创建报告目录
+          mkdir -p reports
           
-          # 使用绝对路径确保文件访问
-          SARIF_FILE="${{ steps.check-sarif.outputs.sarif_file }}"
-          jq -r '.runs[0].results | group_by(.level) | map("• \(.[0].level | ascii_upcase): \(length)个") | join("\n")' "$SARIF_FILE" >> report.md
+          # 生成Markdown主报告
+          echo "# 安全扫描报告" > reports/security-report.md
+          echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> reports/security-report.md
+          echo "\n## 漏洞概览" >> reports/security-report.md
           
-          echo "\n## 详细问题列表" >> report.md
-          jq -r '.runs[0].results | sort_by(.level) | reverse | .[] | "### \(.ruleId)\n" +
-                 "**严重程度**: \(.level)\n" +
-                 "**文件**: \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)\n" +
-                 "**描述**: \(.message.text)\n" +
-                 "**修复建议**: \(if .resolution then .resolution.markdown else "无" end)\n"' \
-              "$SARIF_FILE" >> report.md
+          # 从SARIF文件提取数据
+          jq -r '
+            .runs[0].results | 
+            group_by(.level) | 
+            map("• **\(.[0].level | ascii_upcase)**: \(length)个") | 
+            join("\n")
+          ' ./codeql_results/results.sarif >> reports/security-report.md
 
-      - name: Generate Simplified JSON
-        if: steps.check-sarif.outputs.sarif_file
-        run: |
-          jq '.runs[0].results | map({
-            ruleId: .ruleId,
-            level: .level,
-            message: .message.text,
-            file: .locations[0].physicalLocation.artifactLocation.uri,
-            line: .locations[0].physicalLocation.region.startLine
-          })' "${{ steps.check-sarif.outputs.sarif_file }}" > report.json
+          # 添加详细问题列表
+          echo "\n## 问题详情" >> reports/security-report.md
+          jq -r '
+            .runs[0].results[] | 
+            "### \(.ruleId)\n" +
+            "**文件**: `\(.locations[0].physicalLocation.artifactLocation.uri)` " +
+            "(行: \(.locations[0].physicalLocation.region.startLine))\n" +
+            "**严重性**: \(.level)\n" +
+            "**描述**: \(.message.text)\n"
+          ' ./codeql_results/results.sarif >> reports/security-report.md
 
-      # 上传报告（即使分析失败也上传现有文件）
-      - name: Upload Reports
+      # 步骤6：上传报告（自动打包）
+      - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
-          name: security-reports
+          name: security-report
           path: |
-            ./report.md
-            ./report.json
-            ./codeql-results/results.sarif
-          if-no-files-found: warn  # 如果没有报告文件也不报错
+            reports/security-report.md
+            ./codeql_results/results.sarif
