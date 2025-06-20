@@ -28,31 +28,29 @@ jobs:
       - name: Build project
         run: mvn clean package -DskipTests
 
-      # CodeQL 分析（输出 SARIF 文件）
+      # CodeQL 分析
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
           category: 'java-security'
-          output: codeql-results # 指定输出目录
+          output: codeql-results
 
-      # ========== 新增报告生成步骤 ==========
-      - name: Setup Report Tools
+      # ========== 报告生成 ==========
+      - name: Setup Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
-          npm install -g sarif-to-html
+          npm install -g @microsoft/sarif-tools
 
+      # 生成HTML报告
       - name: Generate HTML Report
         run: |
-          sarif-to-html --input ./codeql-results/results.sarif --output ./codeql-report.html
+          npx @microsoft/sarif-tools sarif2html \
+            --input ./codeql-results/results.sarif \
+            --output ./codeql-report.html \
+            --dark
 
-      - name: Generate PDF Report (使用 Chrome Headless)
-        run: |
-          sudo apt-get install -y chromium-browser
-          npx @puppeteer/browsers install chromium@latest
-          npx sarif-to-pdf ./codeql-results/results.sarif ./codeql-report.pdf
-
-      # 生成 Markdown 摘要（快速预览）
+      # 生成Markdown摘要
       - name: Generate Summary
         run: |
           echo "# CodeQL 安全扫描报告" > report.md
@@ -62,12 +60,11 @@ jobs:
           echo "\n## 严重问题示例" >> report.md
           jq -r '.runs[0].results[] | select(.level == "error") | "- [\(.ruleId)] \(.message.text)\n  文件: \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)"' ./codeql-results/results.sarif | head -5 >> report.md
 
-      # 上传所有报告文件
+      # 上传报告
       - name: Upload Reports
         uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |
             ./codeql-report.html
-            ./codeql-report.pdf
             ./report.md
