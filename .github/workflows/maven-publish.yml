@@ -26,7 +26,7 @@ jobs:
 
       # 必须步骤：编译项目（CodeQL 需要编译后的代码进行分析）
       - name: Build project
-        run: ./mvnw clean package -DskipTests
+        run: ./mvn clean package -DskipTests
 
       # 执行分析并上传报告
       - name: Perform CodeQL Analysis
