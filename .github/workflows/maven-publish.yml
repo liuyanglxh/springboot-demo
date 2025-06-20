@@ -35,30 +35,41 @@ jobs:
           category: 'java-security'
           output: codeql-results
 
-      # ========== 报告生成 ==========
+      # ========== 纯本地报告生成 ==========
       - name: Setup Tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-          npm install -g @microsoft/sarif-tools
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-      # 生成HTML报告
-      - name: Generate HTML Report
-        run: |
-          npx @microsoft/sarif-tools sarif2html \
-            --input ./codeql-results/results.sarif \
-            --output ./codeql-report.html \
-            --dark
-
-      # 生成Markdown摘要
-      - name: Generate Summary
+      # 生成Markdown报告（100%可靠）
+      - name: Generate Markdown Report
         run: |
           echo "# CodeQL 安全扫描报告" > report.md
           echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> report.md
           echo "\n## 漏洞统计" >> report.md
+          
+          # 统计各级别漏洞数量
           jq -r '.runs[0].results | group_by(.level) | map("• \(.[0].level | ascii_upcase): \(length)个") | join("\n")' ./codeql-results/results.sarif >> report.md
-          echo "\n## 严重问题示例" >> report.md
-          jq -r '.runs[0].results[] | select(.level == "error") | "- [\(.ruleId)] \(.message.text)\n  文件: \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)"' ./codeql-results/results.sarif | head -5 >> report.md
+          
+          echo "\n## 详细问题列表" >> report.md
+          
+          # 列出所有问题（按严重程度排序）
+          jq -r '.runs[0].results | sort_by(.level) | reverse | .[] | "### \(.ruleId)\n" +
+                 "**严重程度**: \(.level)\n" +
+                 "**文件**: \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)\n" +
+                 "**描述**: \(.message.text)\n" +
+                 "**修复建议**: \(if .resolution then .resolution.markdown else "无" end)\n"' \
+              ./codeql-results/results.sarif >> report.md
+
+      # 生成精简版JSON报告（保留原始数据）
+      - name: Generate Simplified JSON
+        run: |
+          jq '.runs[0].results | map({
+            ruleId: .ruleId,
+            level: .level,
+            message: .message.text,
+            file: .locations[0].physicalLocation.artifactLocation.uri,
+            line: .locations[0].physicalLocation.region.startLine,
+            snippet: .locations[0].physicalLocation.region.snippet?.text
+          })' ./codeql-results/results.sarif > report.json
 
       # 上传报告
       - name: Upload Reports
@@ -66,5 +77,6 @@ jobs:
         with:
           name: security-reports
           path: |
-            ./codeql-report.html
             ./report.md
+            ./report.json
+            ./codeql-results/results.sarif  # 原始数据
