@@ -1,5 +1,4 @@
-
-name: CodeQL Analysis
+name: CodeQL Analysis with Report
 
 on:
   push:
@@ -12,44 +11,67 @@ jobs:
     name: Analyze with CodeQL
     runs-on: ubuntu-latest
     permissions:
-      security-events: write # 必须，用于上传报告到 GitHub Security
+      security-events: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      # 初始化 CodeQL（指定 Java 语言）
+      # 初始化 CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: 'java'
-          queries: +security-extended # 使用扩展安全规则集（推荐）
+          queries: +security-extended
 
-      # 必须步骤：编译项目（CodeQL 需要编译后的代码进行分析）
+      # 编译项目
       - name: Build project
         run: mvn clean package -DskipTests
 
-      # 执行分析并上传报告
+      # CodeQL 分析（输出 SARIF 文件）
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: 'java-security' # 报告分类标识
+          category: 'java-security'
+          output: codeql-results # 指定输出目录
+
+      # ========== 新增报告生成步骤 ==========
+      - name: Setup Report Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq chromium
+          npm install -g @microsoft/sarif-viewer
+
+      # 生成 HTML 报告（交互式）
       - name: Generate HTML Report
         run: |
-          # 安装报告工具
-          sudo apt-get install -y jq
-          npm install -g @microsoft/sarif-viewer
-          
-          # 转换 SARIF 为 HTML
-          npx sarif-viewer --input ./codeql-database/results.sarif --output ./report.html
-          
-          # 可选：转换为 PDF（需安装 chromium）
-          sudo apt-get install -y chromium
-          npx sarif-viewer --input ./codeql-database/results.sarif --output ./report.pdf --format pdf
+          npx sarif-viewer --input ./codeql-results/results.sarif \
+                          --output ./codeql-report.html \
+                          --title "CodeQL Security Report"
 
-      - name: Upload Report
+      # 生成 PDF 报告（适合打印）
+      - name: Generate PDF Report
+        run: |
+          npx sarif-viewer --input ./codeql-results/results.sarif \
+                          --output ./codeql-report.pdf \
+                          --format pdf
+
+      # 生成 Markdown 摘要（快速预览）
+      - name: Generate Summary
+        run: |
+          echo "# CodeQL 安全扫描报告" > report.md
+          echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> report.md
+          echo "\n## 漏洞统计" >> report.md
+          jq -r '.runs[0].results | group_by(.level) | map("• \(.[0].level | ascii_upcase): \(length)个") | join("\n")' ./codeql-results/results.sarif >> report.md
+          echo "\n## 严重问题示例" >> report.md
+          jq -r '.runs[0].results[] | select(.level == "error") | "- [\(.ruleId)] \(.message.text)\n  文件: \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)"' ./codeql-results/results.sarif | head -5 >> report.md
+
+      # 上传所有报告文件
+      - name: Upload Reports
         uses: actions/upload-artifact@v4
         with:
-          name: security-report
+          name: security-reports
           path: |
-            ./report.html
-            ./report.pdf
+            ./codeql-report.html
+            ./codeql-report.pdf
+            ./report.md
