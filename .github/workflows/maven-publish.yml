@@ -39,22 +39,18 @@ jobs:
       - name: Setup Report Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq chromium
-          npm install -g @microsoft/sarif-viewer
+          sudo apt-get install -y jq
+          npm install -g sarif-to-html
 
-      # 生成 HTML 报告（交互式）
       - name: Generate HTML Report
         run: |
-          npx sarif-viewer --input ./codeql-results/results.sarif \
-                          --output ./codeql-report.html \
-                          --title "CodeQL Security Report"
+          sarif-to-html --input ./codeql-results/results.sarif --output ./codeql-report.html
 
-      # 生成 PDF 报告（适合打印）
-      - name: Generate PDF Report
+      - name: Generate PDF Report (使用 Chrome Headless)
         run: |
-          npx sarif-viewer --input ./codeql-results/results.sarif \
-                          --output ./codeql-report.pdf \
-                          --format pdf
+          sudo apt-get install -y chromium-browser
+          npx @puppeteer/browsers install chromium@latest
+          npx sarif-to-pdf ./codeql-results/results.sarif ./codeql-report.pdf
 
       # 生成 Markdown 摘要（快速预览）
       - name: Generate Summary
