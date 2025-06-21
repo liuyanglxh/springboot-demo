@@ -9,4 +9,6 @@ on:
 
 jobs:
   job1:
-
+    steps:
+      - run: pwd
+      - run: ls
