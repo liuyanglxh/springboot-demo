@@ -19,17 +19,17 @@ jobs:
 
       # 初始化 CodeQL（指定 Java 语言）
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v2
         with:
           languages: 'java'
           queries: +security-extended # 使用扩展安全规则集（推荐）
-        
-        # 必须步骤：编译项目（CodeQL 需要编译后的代码进行分析）
+
+      # 必须步骤：编译项目（CodeQL 需要编译后的代码进行分析）
       - name: Build project
         run: mvn clean package -DskipTests
 
-        # 执行分析并上传报告
+      # 执行分析并上传报告
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v2
         with:
           category: 'java-security' # 报告分类标识
