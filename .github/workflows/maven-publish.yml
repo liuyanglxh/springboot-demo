@@ -1,45 +1,35 @@
-name: "CodeQL Scan with Report"
+
+name: CodeQL Analysis
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master ]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches: [ master ]
 
 jobs:
-  codeql-analysis:
-    name: CodeQL Analysis - Java 21
+  analyze:
+    name: Analyze with CodeQL
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      contents: read
-      security-events: write
+      security-events: write # 必须，用于上传报告到 GitHub Security
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Build with Maven (skip tests)
-        run: mvn clean install -DskipTests
-
+      # 初始化 CodeQL（指定 Java 语言）
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v2
         with:
-          languages: java
+          languages: 'java'
+          queries: +security-extended # 使用扩展安全规则集（推荐）
+        
+        # 必须步骤：编译项目（CodeQL 需要编译后的代码进行分析）
+      - name: Build project
+        run: mvn clean package -DskipTests
 
+        # 执行分析并上传报告
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
-      - name: Upload SARIF file as artifact
-        uses: actions/upload-artifact@v4
+        uses: github/codeql-action/analyze@v2
         with:
-          name: codeql-scan-report
-          path: ${{ runner.temp }}/codeql-reports/*.sarif
+          category: 'java-security' # 报告分类标识
