@@ -44,9 +44,18 @@ jobs:
           ls -la ../
           echo "查看 results 目录是否存在："
           ls -la ../results
-
-      - name: Upload SARIF to GitHub Security Tab
-        uses: actions/upload-artifact@v4
-        with:
-          name: results
-          path: /home/runner/work/springboot-demo/results/java.sarif
+      - run: |
+          echo 'now'
+          pwd
+          cd ..
+          echo 'after cd ..'
+          pwd
+      
+      - name: install sarif to html
+        run: |
+          npm install -g @shiftleft/sarif2html
+#      - name: Upload SARIF to GitHub Security Tab
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: results
+#          path: /home/runner/work/springboot-demo/results/java.sarif
