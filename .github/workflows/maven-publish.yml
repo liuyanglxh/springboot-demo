@@ -26,16 +26,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Create codeql-config.yml
-        run: |
-          cat > codeql-config.yml << EOL
-          version: 2
-          disable-default-queries: false
-          queries:
-            - uses: https://github.com/github/codeql.git
-              path: java/ql/src/experimental/security-tests
-          EOL
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
