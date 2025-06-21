@@ -51,9 +51,10 @@ jobs:
           echo 'after cd ..'
           pwd
           echo 'results'
+          ls results
 
       - name: Upload SARIF to GitHub Security Tab
         uses: actions/upload-artifact@v4
         with:
           name: results
-          path: results/java.sarif
+          path: /home/runner/work/springboot-demo/results/java.sarif
