@@ -47,9 +47,6 @@ jobs:
           ls results
       - run: pwd
 
-      - name: Install SARIF to HTML tool
-        run: |
-          npm install -g @shiftleft/sarif2html
 #      - name: Upload SARIF to GitHub Security Tab
 #        uses: actions/upload-artifact@v4
 #        with:
