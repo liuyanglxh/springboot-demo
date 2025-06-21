@@ -18,86 +18,92 @@ jobs:
       # 步骤1：检出代码
       - uses: actions/checkout@v4
 
-      # 步骤2：初始化 CodeQL
+      # 步骤2：初始化 CodeQL (v3语法)
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
-          languages: 'java'
+          languages: java
           queries: security-extended
 
       # 步骤3：编译项目
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # 步骤4：运行分析（带错误处理）
-      - name: Run CodeQL Analysis
-        id: codeql-analysis
-        uses: github/codeql-action/analyze@v2
-        continue-on-error: true  # 即使分析失败也继续
-        with:
-          output: ./codeql_results
+      # 步骤4：运行分析 (v3语法)
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+        env:
+          CODEQL_ACTION_DISABLE_SARIF_REDACTION: true  # 确保获取完整报告
 
-      # 步骤5：验证结果文件
-      - name: Check SARIF File
-        id: check-sarif
+      # 步骤5：自动定位结果文件
+      - name: Locate Results
+        id: locate-results
         run: |
-          if [ -f "./codeql_results/results.sarif" ]; then
-            echo "sarif_exists=true" >> $GITHUB_OUTPUT
-            echo "::notice::SARIF file found, proceeding with report generation"
+          SARIF_PATH=$(find . -name "results.sarif" -print -quit)
+          if [ -f "$SARIF_PATH" ]; then
+            echo "sarif_path=${SARIF_PATH}" >> $GITHUB_OUTPUT
+            echo "report_dir=$(dirname ${SARIF_PATH})" >> $GITHUB_OUTPUT
           else
-            echo "sarif_exists=false" >> $GITHUB_OUTPUT
-            echo "::warning::No SARIF file found at ./codeql_results/results.sarif"
-            # 调试：列出目录内容
-            echo "Directory contents:"
-            ls -la ./codeql_results/ || echo "No codeql_results directory"
+            echo "::warning::No SARIF file found in workspace"
+            find . -name "*.sarif" || echo "No SARIF files detected"
           fi
 
-      # 步骤6：生成报告（仅当有结果时）
-      - name: Create Security Report
-        if: steps.check-sarif.outputs.sarif_exists == 'true'
+      # 步骤6：生成智能报告
+      - name: Generate Report
+        if: steps.locate-results.outputs.sarif_path
         run: |
-          mkdir -p reports
+          mkdir -p ./security-report
           
-          # 基础报告
-          echo "# 安全扫描报告" > reports/security-report.md
-          echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> reports/security-report.md
+          # 主报告文件
+          echo "# 安全扫描报告" > ./security-report/README.md
+          echo "**扫描时间**: $(date '+%Y-%m-%d %H:%M:%S')" >> ./security-report/README.md
           
-          # 使用jq处理SARIF文件
+          # 自动处理不同位置的SARIF文件
+          SARIF_FILE="${{ steps.locate-results.outputs.sarif_path }}"
+          
+          # 漏洞统计
           {
-            echo "## 漏洞概览"
+            echo "## 扫描概览"
             jq -r '
               .runs[0].results | 
               if length > 0 then
-                group_by(.level) | 
+                "发现安全问题: \(length)个\n" +
+                (group_by(.level) | 
                 map("• \(.[0].level | ascii_upcase): \(length)个") | 
-                join("\n")
+                join("\n"))
               else
-                "未发现安全问题"
+                "✅ 未发现高危漏洞"
               end
-            ' ./codeql_results/results.sarif
-          
+            ' "${SARIF_FILE}"
+          } >> ./security-report/README.md
+
+          # 详细结果 (最多显示20条)
+          {
             echo "\n## 详细结果"
             jq -r '
               .runs[0].results | 
               if length > 0 then
-                .[] | 
+                .[0:20][] | 
                 "### \(.ruleId)\n" +
-                "**文件**: `\(.locations[0].physicalLocation.artifactLocation.uri)` " +
+                "**等级**: \(.level)\n" +
+                "**位置**: `\(.locations[0].physicalLocation.artifactLocation.uri)` " +
                 "(行: \(.locations[0].physicalLocation.region.startLine))\n" +
-                "**严重性**: \(.level)\n" +
                 "**描述**: \(.message.text)\n"
               else
-                "无漏洞报告"
+                "无漏洞细节"
               end
-            ' ./codeql_results/results.sarif
-          } >> reports/security-report.md
+            ' "${SARIF_FILE}"
+          } >> ./security-report/README.md
 
-      # 步骤7：上传结果（无论成功与否）
+          # 原始数据备份
+          cp "${SARIF_FILE}" ./security-report/codeql-results.sarif
+
+      # 步骤7：上传结果
       - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
           name: security-report
           path: |
-            reports/security-report.md
-            ./codeql_results/results.sarif
-          if-no-files-found: warn  # 没有文件时不报错
+            ./security-report/*
+          if-no-files-found: warn
