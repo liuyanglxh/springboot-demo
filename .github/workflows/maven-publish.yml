@@ -38,8 +38,12 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       - run: |
+          echo "当前目录："
           pwd
-          ls
+          echo "查看上级目录内容："
+          ls -la ../
+          echo "查看 results 目录是否存在："
+          ls -la ../results
 
 #      - name: Upload SARIF to GitHub Security Tab
 #        uses: github/codeql-action/upload-sarif@v3
