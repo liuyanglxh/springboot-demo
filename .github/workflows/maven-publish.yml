@@ -9,7 +9,7 @@ on:
 
 jobs:
   job1:
+    runs-on: ubuntu-latest
     steps:
-      - runs-on: unbuntu-latest
       - run: pwd
       - run: ls
