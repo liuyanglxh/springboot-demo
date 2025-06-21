@@ -30,7 +30,6 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          config-file: ./codeql-config.yml
 
       - name: Autobuild (Maven or Gradle)
         uses: github/codeql-action/autobuild@v3
