@@ -30,7 +30,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          config-file: codeql-config.yml # 👈 新增这行
+          queries: +security-extended
 
       - name: Autobuild (Maven or Gradle)
         uses: github/codeql-action/autobuild@v3
