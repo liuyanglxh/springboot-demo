@@ -19,7 +19,7 @@ jobs:
 
       # 初始化 CodeQL（指定 Java 语言）
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v3
         with:
           languages: 'java'
           queries: +security-extended # 使用扩展安全规则集（推荐）
@@ -30,6 +30,6 @@ jobs:
 
         # 执行分析并上传报告
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v3
         with:
           category: 'java-security' # 报告分类标识
