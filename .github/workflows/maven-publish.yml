@@ -33,12 +33,14 @@ jobs:
 #        with:
 #          name: jar-file
 #          path: target/*.jar
-  analyze:
+  codeql-analysis:
+    name: CodeQL Analysis - Java 21
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: read
-      packages: write
       security-events: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,16 +49,15 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'temurin'  # 使用 Temurin JDK 分发版
-          cache: 'maven'  # 启用 Maven 缓存加速构建
-
-      - name: Build with Maven (skip tests)
-        run: mvn clean install -DskipTests
+          distribution: 'temurin'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
+
+      - name: Autobuild (capture compile commands)
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
