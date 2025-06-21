@@ -58,7 +58,7 @@ jobs:
           cd sarif-web-component
           npx webpack --mode production
           mkdir -p dist/reports
-          cp ../results/java.sarif dist/reports/
+          cp /home/runner/work/springboot-demo/results/java.sarif dist/reports/
           echo """
           <!DOCTYPE html>
           <html>
@@ -70,6 +70,10 @@ jobs:
             </body>
           </html>
           """ > dist/report.html
+          echo 'where am i'
+          pwd
+          echo 'what is in the dist'
+          ls dist
 
       - name: show file info
         run: |
