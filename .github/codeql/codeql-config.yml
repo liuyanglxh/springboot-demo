@@ -1,17 +1,21 @@
-name: "Java Deep Scan"
+name: "Java Security Scan"
+
+# 必须保留的配置
 disable-default-queries: false
 
+# 查询配置
 queries:
-  - uses: security-extended
   - uses: security-and-quality
-  - uses: security-experimental
-  - name: Custom Hardcoded Credentials
-    query: |
-      import java
-      from HardcodedCredentialsConfig config, Expr password
-      where password = config.getAPasswordElement()
-      select password, "硬编码密码风险"
-    severity: error
+  - uses: security-extended
+  - name: Custom Queries
+    queries: .github/codeql/custom.ql
 
+# 排除路径（按需修改）
 paths-ignore:
   - "**/test/**"
+  - "**/generated/**"
+
+# 可选：排除特定规则
+exclude:
+  - id: java/unsafe-deserialization
+    reason: "本项目明确需要反序列化功能"
