@@ -30,7 +30,10 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          queries: +security-extended,security-and-quality,correctness,performance,maintainability
+          queries: |
+            security-and-quality,  # 基础质量与安全
+            security-extended,     # 扩展安全规则
+            java/security         # Java专属规则
 
       - name: Autobuild (Maven or Gradle)
         uses: github/codeql-action/autobuild@v3
