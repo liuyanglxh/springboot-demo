@@ -45,3 +45,20 @@ jobs:
         with:
           name: jar-file
           path: target/*.jar
+
+      - name: initial codeql
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'java'
+          queries: security-extended
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          output: ./codeql_results
+
+      - name: 上传分析后的文件夹
+        uses: github/upload-artifact@v4
+        with:
+          name: analysis-output
+          path: codeql_results/*
