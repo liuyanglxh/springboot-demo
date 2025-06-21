@@ -50,12 +50,10 @@ jobs:
           cd ..
           echo 'after cd ..'
           pwd
-      
-      - name: install sarif to html
-        run: |
-          npm install -g @shiftleft/sarif2html
-#      - name: Upload SARIF to GitHub Security Tab
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: results
-#          path: /home/runner/work/springboot-demo/results/java.sarif
+          echo 'results'
+
+      - name: Upload SARIF to GitHub Security Tab
+        uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results/java.sarif
