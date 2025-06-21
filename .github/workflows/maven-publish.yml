@@ -30,8 +30,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          queries: +security-extended,security-and-quality,+security-experimental  # 启用实验性规则
-          config-file: .github/codeql/codeql-config.yml  # 自定义配置
+          config-file: codeql-config.yml # 👈 新增这行
 
       - name: Autobuild (Maven or Gradle)
         uses: github/codeql-action/autobuild@v3

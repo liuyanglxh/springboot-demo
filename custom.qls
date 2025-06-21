@@ -1,0 +1,10 @@
+# custom.qls
+version: 1.0.0
+
+queries:
+  - name: Security Queries
+    queryPath: java/security
+  - name: Quality Queries
+    queryPath: java/quality-model
+  - name: Experimental Queries
+    queryPath: java/experimental

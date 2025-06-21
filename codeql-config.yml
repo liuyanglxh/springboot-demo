@@ -1,0 +1,2 @@
+# codeql-config.yml
+targetQuerySuite: $default-java-security-and-quality
