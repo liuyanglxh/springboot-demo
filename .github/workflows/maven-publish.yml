@@ -10,5 +10,6 @@ on:
 jobs:
   job1:
     steps:
+      - runs-on: unbuntu-latest
       - run: pwd
       - run: ls
