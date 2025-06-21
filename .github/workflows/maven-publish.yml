@@ -30,7 +30,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          queries: +security-extended,+security,security-and-quality,correctness,performance,maintainability
+          queries: +security-extended,security-and-quality,correctness,performance,maintainability
 
       - name: Autobuild (Maven or Gradle)
         uses: github/codeql-action/autobuild@v3
