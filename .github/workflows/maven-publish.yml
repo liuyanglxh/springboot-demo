@@ -1,40 +1,15 @@
-
-name: CodeQL Analysis
+name: "CodeQL Scan"
 
 on:
   push:
-    branches: [ demo ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ demo ]
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set Up JDK21
-        uses: actions/setup-java@v4
-        with:
-          java-version: 21
-          distribution: 'temurin'
-          server-id: github
-          settings-path: ${{ github.workspace }}
-
-      - name: mvn package
-        run: |
-          mvn -B clean package --file pom.xml
-
-#      - name: 上传jar文件
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: jar-file
-#          path: target/*.jar
   codeql-analysis:
-    name: CodeQL Analysis - Java 21
+    name: Analyze Java Code
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -51,21 +26,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Checkout CodeQL custom queries
-        run: |
-          mkdir -p codeql-config
-          cat > codeql-config/codeql-config.yml << 'EOL'
-          # codeql-config.yml
-          disable-default-queries: false
-          queries:
-            - uses: codeql/java-autobuild/security-and-quality.qls
-          EOL
-
       - name: Initialize CodeQL with custom config
         uses: github/codeql-action/init@v3
         with:
           languages: java
-          config-file: codeql-config/codeql-config.yml
+          config-file: ./codeql-config.yml
 
       - name: Autobuild (capture compile commands)
         uses: github/codeql-action/autobuild@v3
@@ -78,4 +43,3 @@ jobs:
         with:
           name: codeql-scan-report
           path: ${{ runner.temp }}/codeql-reports/*.sarif
-
