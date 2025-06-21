@@ -1,21 +1,12 @@
 name: "Java Security Scan"
 
-# 必须保留的配置
-disable-default-queries: false
-
-# 查询配置
+# 必须配置的查询部分
 queries:
-  - uses: security-and-quality
-  - uses: security-extended
-  - name: Custom Queries
-    queries: .github/codeql/custom.ql
+  - uses: security-and-quality  # 必须包含至少一个uses
+  - uses: security-extended     # 质量与安全扩展规则
+  - uses: security-experimental # 实验性规则（可选）
 
 # 排除路径（按需修改）
 paths-ignore:
   - "**/test/**"
   - "**/generated/**"
-
-# 可选：排除特定规则
-exclude:
-  - id: java/unsafe-deserialization
-    reason: "本项目明确需要反序列化功能"
