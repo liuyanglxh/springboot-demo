@@ -35,6 +35,10 @@ jobs:
       - name: Autobuild (capture compile commands)
         uses: github/codeql-action/autobuild@v3
 
+      - name: Check if database exists
+        run: |
+          ls -la /home/runner/work/_temp/codeql_databases/java
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
