@@ -28,6 +28,13 @@ jobs:
           distribution: 'temurin'
           server-id: github
           settings-path: ${{ github.workspace }}
+
+      - name: initial codeql
+        uses: github/codeql-action/init@v3
+        with:
+          languages: 'java'
+          queries: security-extended
+
       - name: mvn package
         run: |
           mvn -B clean package --file pom.xml
@@ -37,12 +44,6 @@ jobs:
         with:
           name: jar-file
           path: target/*.jar
-
-      - name: initial codeql
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'java'
-          queries: security-extended
 
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
