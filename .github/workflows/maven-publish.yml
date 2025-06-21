@@ -51,23 +51,31 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Initialize CodeQL
+      - name: Checkout CodeQL custom queries
+        run: |
+          mkdir -p codeql-config
+          cat > codeql-config/codeql-config.yml << 'EOL'
+          # codeql-config.yml
+          disable-default-queries: false
+          queries:
+            - uses: codeql/java-autobuild/security-and-quality.qls
+          EOL
+
+      - name: Initialize CodeQL with custom config
         uses: github/codeql-action/init@v3
         with:
           languages: java
+          config-file: codeql-config/codeql-config.yml
 
       - name: Autobuild (capture compile commands)
         uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        with:
-          # 启用更全面的安全和质量查询规则
-          query-suite: codeql/java-autobuild/security-and-quality.qls
 
       - name: Upload SARIF file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-report
-          path: ${{ runner.temp }}/codeql-reports/*
+          path: ${{ runner.temp }}/codeql-reports/*.sarif
 
