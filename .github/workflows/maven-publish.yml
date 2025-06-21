@@ -38,13 +38,6 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       - run: |
-          echo "当前目录："
-          pwd
-          echo "查看上级目录内容："
-          ls -la ../
-          echo "查看 results 目录是否存在："
-          ls -la ../results
-      - run: |
           echo 'now'
           pwd
           cd ..
@@ -52,6 +45,7 @@ jobs:
           pwd
           echo 'results'
           ls results
+      - run: pwd
 
       - name: Install SARIF to HTML tool
         run: |
@@ -61,3 +55,38 @@ jobs:
 #        with:
 #          name: results
 #          path: /home/runner/work/springboot-demo/results/java.sarif
+      - name: Install SARIF Viewer
+        run: |
+          git clone https://github.com/microsoft/sarif-web-component.git
+
+      # 安装依赖
+      - name: Install Dependencies
+        run: |
+          cd sarif-web-component
+          npm install
+
+      # 构建静态 HTML 查看器并注入 SARIF 内容
+      - name: Generate HTML Report
+        run: |
+          cd sarif-web-component
+          npx webpack --mode production
+          mkdir -p dist/reports
+          cp ../results/java.sarif dist/reports/
+          echo """
+          <!DOCTYPE html>
+          <html>
+            <head><title>CodeQL SARIF Report</title></head>
+            <body>
+              <h1>CodeQL 扫描结果</h1>
+              <sarif-viewer src="reports/java.sarif"></sarif-viewer>
+              <script type="module" src="bundle.js"></script>
+            </body>
+          </html>
+          """ > dist/report.html
+
+      # 保存为 artifact
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-html-report
+          path: sarif-web-component/dist/report.html
