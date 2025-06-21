@@ -26,7 +26,17 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Initialize CodeQL with custom config
+      - name: Create codeql-config.yml
+        run: |
+          cat > codeql-config.yml << EOL
+          version: 2
+          disable-default-queries: false
+          queries:
+            - uses: https://github.com/github/codeql.git
+              path: java/ql/src/experimental/security-tests
+          EOL
+
+      - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
@@ -35,20 +45,14 @@ jobs:
       - name: Autobuild (capture compile commands)
         uses: github/codeql-action/autobuild@v3
 
-      - name: Check if database exists
-        run: |
-          ls -la /home/runner/work/_temp/codeql_databases/java
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-
-      - run: pwd
-
-      - run: ls
+        with:
+          output: /tmp/codeql-scan-report.sarif
 
       - name: Upload SARIF file as artifact
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-report
-          path: ${{ runner.temp }}/codeql-reports/*.sarif
-
+          path: /tmp/codeql-scan-report.sarif
+          if-no-files-found: error

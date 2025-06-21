@@ -4,4 +4,5 @@ version: 2
 disable-default-queries: false
 
 queries:
-  - uses: security-and-quality
+  - uses: https://github.com/github/codeql.git
+    path: java/ql/src/experimental/security-tests
