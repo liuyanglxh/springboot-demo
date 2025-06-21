@@ -66,5 +66,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-report
-          path: ${{ runner.temp }}/codeql-reports/*.sarif
+          path: ${{ runner.temp }}/codeql-reports/*
 
