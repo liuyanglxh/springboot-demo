@@ -79,6 +79,12 @@ jobs:
         run: |
           pwd
           ls
+      # 上传html
+      - name: upload report.html
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportHtml
+          path: /home/runner/work/springboot-demo/springboot-demo/sarif-web-component/dist/report.html
 
       # 保存为 artifact
 #      - name: Upload HTML Report
