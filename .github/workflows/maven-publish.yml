@@ -37,72 +37,9 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-#      - name: Upload SARIF to GitHub Security Tab
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: results
-#          path: /home/runner/work/springboot-demo/results/java.sarif
-      # 下面是关键步骤：生成人类可读的 HTML 报告
-      - name: Generate HTML Report with Python
-        run: |
-          cat > generate-report.py << EOL
-          import json
-        
-          with open('../results/java.sarif', 'r') as f:
-            data = json.load(f)
-            
-            runs = data.get("runs", [])
-            results = runs[0]["results"] if runs else []
-            
-            html = """
-            <!DOCTYPE html>
-            <html>
-            <head><title>CodeQL 扫描报告</title></head>
-            <style>
-          body { font-family: Arial, sans-serif; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { padding: 8px; border: 1px solid #ccc; text-align: left; vertical-align: top; }
-          th { background-color: #f2f2f2; }
-            </style>
-            <body>
-            <h1>CodeQL 扫描结果</h1>
-            <p>共发现 {{count}} 个问题：</p>
-            <table>
-            <tr>
-            <th>规则 ID</th>
-            <th>严重程度</th>
-            <th>描述</th>
-            <th>文件位置</th>
-            </tr>
-            {% for result in results %}
-            <tr>
-            <td>{{result['ruleId']}}</td>
-            <td>{{result['level']}}</td>
-            <td>{{result['message']['text']}}</td>
-            <td>
-            {% for loc in result.get('locations', []) %}
-            {{loc['physicalLocation']['file']}} :
-            {{loc['physicalLocation'].get('region', {}).get('startLine', '?')}}
-            {% endfor %}
-            </td>
-            </tr>
-            {% endfor %}
-            </table>
-            </body>
-            </html>
-            EOL
-            
-            from jinja2 import Template
-            template = Template(html)
-            rendered = template.render(results=results, count=len(results))
-          
-          with open('codeql-report.html', 'w') as out:
-            out.write(rendered)
-            
-            print("✅ HTML Report generated successfully!")
-
-      - name: Upload HTML Report
+      - name: Upload SARIF to GitHub Security Tab
         uses: actions/upload-artifact@v4
         with:
-          name: codeql-html-report
-          path: codeql-report.html
+          name: results
+          path: ${{ github.workspace }}/../results/java.sarif
+
