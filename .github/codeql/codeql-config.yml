@@ -1,0 +1,17 @@
+name: "Java Deep Scan"
+disable-default-queries: false
+
+queries:
+  - uses: security-extended
+  - uses: security-and-quality
+  - uses: security-experimental
+  - name: Custom Hardcoded Credentials
+    query: |
+      import java
+      from HardcodedCredentialsConfig config, Expr password
+      where password = config.getAPasswordElement()
+      select password, "硬编码密码风险"
+    severity: error
+
+paths-ignore:
+  - "**/test/**"
