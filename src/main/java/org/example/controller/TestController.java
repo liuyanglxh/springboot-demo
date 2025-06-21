@@ -24,18 +24,18 @@ public class TestController {
     }
 
     // 存在命令注入漏洞（ CWE-78 ）
-//    @GetMapping("/run")
-//    public String runCommand(@RequestParam String cmd) throws Exception {
-//        Process process = Runtime.getRuntime().exec(cmd);  // ❌ 不安全的调用
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-//        StringBuilder output = new StringBuilder();
-//        String line;
-//        while ((line = reader.readLine()) != null) {
-//
-//            output.append(line).append("\n");
-//        }
-//        return output.toString();
-//    }
+    @GetMapping("/run")
+    public String runCommand(@RequestParam String cmd) throws Exception {
+        Process process = Runtime.getRuntime().exec(cmd);  // ❌ 不安全的调用
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        StringBuilder output = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+
+            output.append(line).append("\n");
+        }
+        return output.toString();
+    }
 
 
     @GetMapping("/db")
