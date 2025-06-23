@@ -40,13 +40,23 @@ jobs:
         with:
           output: ./results
 
-      - run: |
-          echo "the commit sha"
-          echo "$GITHUB_SHA"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies (如果需要)
+        run: |
+          pip install --upgrade pip
+          pip install python-docx
+
+      - name: convert sarif to word
+        run: |
+          python sarif2word.py "$GITHUB_SHA"
 
       - name: Upload SARIF to GitHub Security Tab
         uses: actions/upload-artifact@v4
         with:
           name: results
-          path: results/java.sarif
+          path: results/sarif2word.py
 
