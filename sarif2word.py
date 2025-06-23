@@ -53,27 +53,26 @@ def generate(path, commit_sha, output_file):
     try:
         with open(path, 'r', encoding='utf-8') as file:
             data = json.load(file)
+            data_detail = []
+                trim_data = data['runs'][0]['results']
+                for x in trim_data:
+                    item = {
+                        "heading": x['ruleId'],
+                        "location": "location: " +
+                                    x['locations'][0]['physicalLocation']['artifactLocation']['uri'] + ":" +
+                                    str(x['locations'][0]['physicalLocation']['region']['startLine']),
+                        "description": x['message']['text']
+                    }
+                    data_detail.append(item)
+
+                final_data = {
+                    "title": "Code-scan report",
+                    "summary": "The commit sha is: " + commit_sha,
+                    "data": data_detail
+                }
+                generate_word_from_json(final_data, output_file)
     except Exception as e:
         print(e)
-    data_detail = []
-    trim_data = data['runs'][0]['results']
-    for x in trim_data:
-        item = {
-            "heading": x['ruleId'],
-            "location": "location: " +
-                        x['locations'][0]['physicalLocation']['artifactLocation']['uri'] + ":" +
-                        str(x['locations'][0]['physicalLocation']['region']['startLine']),
-            "description": x['message']['text']
-        }
-        data_detail.append(item)
-
-    final_data = {
-        "title": "Code-scan report",
-        "summary": "The commit sha is: " + commit_sha,
-        "data": data_detail
-    }
-    generate_word_from_json(final_data, output_file)
-
 
 if __name__ == "__main__":
     generate(".results/java.sarif", sys.argv[1],
