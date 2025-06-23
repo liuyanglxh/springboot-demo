@@ -26,7 +26,7 @@ def generate_word_from_json(json_data, output_file):
         # 添加项目标题
         heading = item.get("heading", "")
         if heading:
-            doc.add_heading(heading, level=2)
+            doc.add_heading(heading, level=1)
 
         # 添加描述作为编号列表的第1项
         description = item.get("description", "")
