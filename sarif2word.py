@@ -56,8 +56,8 @@ def generate(path, commit_sha, output_file):
     except Exception as e:
         print(e)
     data_detail = []
-    data = data['runs'][0]['results']
-    for x in data:
+    trim_data = data['runs'][0]['results']
+    for x in trim_data:
         item = {
             "heading": x['ruleId'],
             "location": "location: " +
