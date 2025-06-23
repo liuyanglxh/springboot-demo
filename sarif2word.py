@@ -76,4 +76,4 @@ def generate(path, commit_sha, output_file):
 
 if __name__ == "__main__":
     generate("./results/java.sarif", sys.argv[1],
-             "./result/output.docx")
+             "./results/output.docx")
